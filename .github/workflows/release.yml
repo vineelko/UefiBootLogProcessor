@@ -1,0 +1,80 @@
+name: github-release
+
+# Only do the release on x.y.z tags.
+on:
+  push:
+    tags:
+    - "[0-9]+.[0-9]+.[0-9]+"
+
+# We need this to be able to create releases.
+permissions:
+  contents: write
+env:
+  VERSION: ${{ github.ref_name }} #gives the tag name
+jobs:
+  # The create-github-release job runs purely to initialize the GitHub release
+  # itself, and names the release after the `x.y.z` tag that was pushed. It's
+  # separate from building the release so that we only create the release once.
+  create-github-release:
+    name: create-github-release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show the version
+        run: |
+          echo "version is: ${{ env.VERSION }}"
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create ${{ env.VERSION }} --verify-tag --title ${{ env.VERSION }}
+    outputs:
+      version: ${{ env.VERSION }}
+
+  build-project:
+    name: build-project
+    needs: ['create-github-release']
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Build
+      run: |
+        dotnet build --configuration ${{matrix.configuration}}
+        echo "ARCHIVE=bin/${{matrix.configuration}}/net8.0-windows" >> $GITHUB_ENV
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: BuildPackage-${{matrix.configuration}}
+        path: bin/${{matrix.configuration}}/net8.0-windows
+
+    - name: Create zip files
+      run: |
+        $archive = "bin/${{matrix.configuration}}/net8.0-windows"
+        $archivezip = "UefiBootLogProcessor-${{matrix.configuration}}.zip"
+        7z a "$($archivezip)" "$($archive)"
+        Get-FileHash -Path "$($archivezip)" -Algorithm SHA256 > "$($archivezip).sha256"
+        # echo "ASSET=$($archivezip)" >> $GITHUB_ENV
+        # echo "ASSET_SUM=$($archivezip).sha256" >> $GITHUB_ENV
+
+    - name: Upload release archive
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # re-declaring the powershell variables is much simpler than playing with
+        # env.variables
+        $archive = "bin/${{matrix.configuration}}/net8.0-windows"
+        $archivezip = "UefiBootLogProcessor-${{matrix.configuration}}.zip"
+        gh release upload "${{ env.VERSION }}" "$($archivezip)" "$($archivezip).sha256"
+        # gh release upload "${{ env.VERSION }}" ${{ env.ASSET }} ${{ env.ASSET_SUM }}
