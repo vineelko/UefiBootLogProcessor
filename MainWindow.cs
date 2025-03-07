@@ -1,3 +1,5 @@
+using Microsoft.Web.WebView2.WinForms;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -6,13 +8,39 @@ namespace UefiBootLogProcessor
     public partial class MainWindow : Form
     {
         Dictionary<string, string> guidNameMap = new Dictionary<string, string>();
+        private WebView2 webView;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AllocConsole();
 
         public MainWindow()
         {
             InitializeComponent();
+            InitializeWebView();
+            //AllocConsole(); // Attach a console to the application
+
             tbBootLogFilePath.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             tbBootLogFilePath.AutoCompleteSource = AutoCompleteSource.FileSystem;
             PrepareGuidToNameMap();
+            tbBootLogFilePath.Text = @"C:\r\tool_work\Build\BUILDLOG_QemuQ35Pkg_Run.txt";
+        }
+        private async void InitializeWebView()
+        {
+            // Create WebView2 instance
+            webView = new WebView2
+            {
+                Dock = DockStyle.Fill // Make it fill the form
+            };
+
+            // Add WebView2 to the form
+            this.pOutput.Controls.Add(webView);
+
+            // Ensure WebView2 is initialized
+            await webView.EnsureCoreWebView2Async();
+
+            // Load the Monaco Editor HTML file
+            string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "monaco.html");
+            webView.Source = new Uri(htmlPath);
         }
 
         private void PrepareGuidToNameMap()
@@ -35,7 +63,7 @@ namespace UefiBootLogProcessor
             }
             catch
             {
-                tbOutput.Text = "Unable to locate guids.txt file. It should be next to the executable.";
+                _ = SetTextAsync("Unable to locate guids.txt file. It should be next to the executable.");
             }
         }
 
@@ -115,12 +143,32 @@ namespace UefiBootLogProcessor
                     }
                 }
 
-                tbOutput.Text = stringBuilder.ToString();
+                _ = SetTextAsync(stringBuilder.ToString());
             }
             catch (Exception e)
             {
-                tbOutput.Text = e.ToString();
+                _ = SetTextAsync(e.ToString());
             }
+        }
+
+        private async Task SetTextAsync(string text)
+        {
+            try
+            {
+                string escapedText = System.Text.Json.JsonSerializer.Serialize(text); // Properly escape text
+                string result = await webView.CoreWebView2.ExecuteScriptAsync($"setEditorText({escapedText});");
+
+                Console.WriteLine("Result: " + result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error executing script: " + ex.Message);
+            }
+        }
+
+        private string getText()
+        {
+            return webView.CoreWebView2.ExecuteScriptAsync("getEditorText();").Result;
         }
     }
 }

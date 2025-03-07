@@ -33,7 +33,6 @@
             tbBootLogFilePath = new TextBox();
             bBrowse = new Button();
             bConvert = new Button();
-            tbOutput = new TextBox();
             lLinkLabel = new LinkLabel();
             pTopPanel = new Panel();
             pButtons = new Panel();
@@ -42,7 +41,6 @@
             lLabelGithub = new LinkLabel();
             pTopPanel.SuspendLayout();
             pButtons.SuspendLayout();
-            pOutput.SuspendLayout();
             pBottom.SuspendLayout();
             SuspendLayout();
             // 
@@ -91,19 +89,6 @@
             bConvert.UseVisualStyleBackColor = true;
             bConvert.Click += bConvert_Click;
             // 
-            // tbOutput
-            // 
-            tbOutput.BackColor = SystemColors.Control;
-            tbOutput.Dock = DockStyle.Fill;
-            tbOutput.Location = new Point(5, 5);
-            tbOutput.Multiline = true;
-            tbOutput.Name = "tbOutput";
-            tbOutput.ReadOnly = true;
-            tbOutput.ScrollBars = ScrollBars.Both;
-            tbOutput.Size = new Size(895, 872);
-            tbOutput.TabIndex = 4;
-            tbOutput.WordWrap = false;
-            // 
             // lLinkLabel
             // 
             lLinkLabel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
@@ -138,7 +123,6 @@
             // 
             // pOutput
             // 
-            pOutput.Controls.Add(tbOutput);
             pOutput.Dock = DockStyle.Fill;
             pOutput.Location = new Point(0, 80);
             pOutput.Name = "pOutput";
@@ -183,8 +167,6 @@
             pTopPanel.ResumeLayout(false);
             pTopPanel.PerformLayout();
             pButtons.ResumeLayout(false);
-            pOutput.ResumeLayout(false);
-            pOutput.PerformLayout();
             pBottom.ResumeLayout(false);
             pBottom.PerformLayout();
             ResumeLayout(false);
@@ -196,7 +178,6 @@
         private TextBox tbBootLogFilePath;
         private Button bBrowse;
         private Button bConvert;
-        private TextBox tbOutput;
         private LinkLabel lLinkLabel;
         private Panel pTopPanel;
         private Panel pButtons;

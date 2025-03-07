@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs/loader.min.js"></script>
+    <style>
+        html, body, #editor {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    <script>
+        var editorInstance;
+
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs' } });
+        require(["vs/editor/editor.main"], function () {
+            editorInstance = monaco.editor.create(document.getElementById("editor"), {
+                value: "Use browse to load a uefi log file and hit convert to replace guids!\n",
+                language: "plaintext",
+                theme: "vs-light",
+                wordWrap: 'off', // Disable word wrapping to allow horizontal scrolling
+                scrollBeyondLastColumn: true, // Allow scrolling beyond the last column
+                editorOptions: {
+                    spellCheck: false // Disables spell check (if integrated)
+                },
+                rulers: [
+                    { column: 80, color: 'rgba(255, 0, 0, 0.5)' },  // Red ruler at column 80
+                    { column: 100, color: 'rgba(0, 0, 255, 0.5)' } // Blue ruler at column 100
+                ],
+                automaticLayout: true // Enable automatic layout
+            });
+        });
+
+        // Resize the Monaco editor when the window or container is resized
+        window.addEventListener('resize', function () {
+            editor.layout();  // Adjust the layout to the new size
+        });
+
+        // Function to set text from C#
+        function setEditorText(newText) {
+            if (editorInstance) {
+                console.log("Editor Instance");
+                editorInstance.setValue(newText);
+            }
+        }
+
+        // Function to get text from the editor
+        function getEditorText() {
+            return editorInstance ? editorInstance.getValue() : "";
+        }
+    </script>
+</body>
+</html>
